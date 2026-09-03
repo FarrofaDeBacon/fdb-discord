@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits } from 'discord.js';
 import { buildCard } from '@fdb-discord/shared';
+import { resolveGuildUuid } from '@fdb-discord/shared';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -20,9 +21,10 @@ export const warnCommand = {
     // Escrever no banco — repository pattern forçaria filtro por guild_id
     // NOTA: ModLog.guild_id é FK pra Guild.id (UUID interno). Resolver snowflake→UUID antes de salvar.
     // Por ora escreve snowflake direto — corrigir quando camada de repositório existir.
+    const guildUuid = await resolveGuildUuid(prisma, guildId, interaction.guild?.name);
     await prisma.modLog.create({
       data: {
-        guild_id: guildId,
+        guild_id: guildUuid,
         type: 'warn',
         user_id: user.id,
         moderator_id: interaction.user.id,
