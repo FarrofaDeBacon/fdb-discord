@@ -1,0 +1,19 @@
+{
+  "name": "@fdb-discord/bot",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js"
+  },
+  "dependencies": {
+    "discord.js": "^14.19.0",
+    "@prisma/client": "^6.0.0",
+    "node-cache": "^5.1.2",
+    "dotenv": "^16.4.0",
+    "@fdb-discord/shared": "workspace:*"
+  }
+}
