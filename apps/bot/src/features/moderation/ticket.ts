@@ -53,7 +53,7 @@ export const ticketCommand = {
 
     const { container, flags } = buildCard({
       title: `🎫 Ticket aberto — ${interaction.user.tag}`,
-      accentColor: resolveThemeColor('ticket'),
+      accentColor: resolveThemeColor('neutral', null),
       textFields: [`Motivo: ${motivo}`, `Canal: ${channel?.name}`],
       buttons: [{ label: 'Fechar', customId: 'ticket_close' }],
     });

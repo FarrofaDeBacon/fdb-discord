@@ -37,7 +37,7 @@ export const warnCommand = {
     // Visual V2 via buildCard (fundação auditada)
     const { container, flags } = buildCard({
       title: `⚠️ Aviso — ${user.tag}`,
-      accentColor: resolveThemeColor('warn'),
+      accentColor: resolveThemeColor('warning', null),
       textFields: [`Moderador: ${interaction.user.tag}`, `Motivo: ${reason}`],
       buttons: [{ label: 'Fechar', customId: 'warn_close' }],
     });
