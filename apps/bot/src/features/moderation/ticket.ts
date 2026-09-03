@@ -24,14 +24,14 @@ export const ticketCommand = {
 
     const categoryId = config?.category_id || null;
     const supportRoleId = config?.support_role_id || null;
-    const guildId = interaction.guild?.id || '';
+    const everyoneRoleId = interaction.guild?.id || '';
     const channel = await interaction.guild?.channels.create({
       name: `ticket-${interaction.user.id}`,
       type: ChannelType.GuildText,
       ...(categoryId ? { parent: categoryId } : {}),
       permissionOverwrites: [
         // @everyone: BLOQUEAR leitura e escrita — privacidade do ticket
-        { id: guildId, deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
+        { id: everyoneRoleId, deny: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
         // Autor: ver e escrever
         { id: interaction.user.id, allow: [PermissionFlagsBits.ViewChannel, PermissionFlagsBits.SendMessages] },
         // Staff (cargo configurado): ver e escrever — se houver
