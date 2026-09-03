@@ -18,9 +18,11 @@ export const warnCommand = {
     const reason = interaction.options.getString('reason') || 'Sem motivo';
 
     // Escrever no banco — repository pattern forçaria filtro por guild_id
+    // NOTA: ModLog.guild_id é FK pra Guild.id (UUID interno). Resolver snowflake→UUID antes de salvar.
+    // Por ora escreve snowflake direto — corrigir quando camada de repositório existir.
     await prisma.modLog.create({
       data: {
-        guild_id: guildId, // NOTA: guarda UUID interno Guild.id; resolver antes
+        guild_id: guildId,
         type: 'warn',
         user_id: user.id,
         moderator_id: interaction.user.id,
@@ -30,13 +32,13 @@ export const warnCommand = {
     });
 
     // Visual V2 via buildCard (fundação auditada)
-    const { container } = buildCard({
+    const { container, flags } = buildCard({
       title: `⚠️ Aviso — ${user.tag}`,
       accentColor: 0xFFCC00,
       textFields: [`Moderador: ${interaction.user.tag}`, `Motivo: ${reason}`],
       buttons: [{ label: 'Fechar', customId: 'warn_close' }],
     });
 
-    await interaction.reply({ flags: 0, components: [container] } as any); // V2 via container
+    await interaction.reply({ flags, components: [container] }); // V2 via container
   },
 };
