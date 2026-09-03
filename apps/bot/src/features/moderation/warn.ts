@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits } from 'discord.js';
 import { buildCard } from '@fdb-discord/shared';
 import { resolveGuildUuid } from '@fdb-discord/shared';
+import { resolveThemeColor } from '@fdb-discord/shared';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -36,7 +37,7 @@ export const warnCommand = {
     // Visual V2 via buildCard (fundação auditada)
     const { container, flags } = buildCard({
       title: `⚠️ Aviso — ${user.tag}`,
-      accentColor: 0xFFCC00,
+      accentColor: resolveThemeColor('warn'),
       textFields: [`Moderador: ${interaction.user.tag}`, `Motivo: ${reason}`],
       buttons: [{ label: 'Fechar', customId: 'warn_close' }],
     });

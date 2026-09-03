@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits, ChannelType } from 'discord.js';
 import { buildCard } from '@fdb-discord/shared';
 import { resolveGuildUuid } from '@fdb-discord/shared';
+import { resolveThemeColor } from '@fdb-discord/shared';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -52,7 +53,7 @@ export const ticketCommand = {
 
     const { container, flags } = buildCard({
       title: `🎫 Ticket aberto — ${interaction.user.tag}`,
-      accentColor: 0x5865F2,
+      accentColor: resolveThemeColor('ticket'),
       textFields: [`Motivo: ${motivo}`, `Canal: ${channel?.name}`],
       buttons: [{ label: 'Fechar', customId: 'ticket_close' }],
     });
