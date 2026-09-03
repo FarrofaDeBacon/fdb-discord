@@ -1,0 +1,138 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// ISOLAMENTO POR GUILD É LEI — guild_id é FK obrigatória
+// Nenhuma tabela de configuração/moderação sem guild_id
+// ============================================================
+
+model Guild {
+  id         String           @id @default(uuid())
+  guild_id   String           @unique // Discord guild ID
+  name       String
+  locale     String           @default("pt-BR")
+  created_at DateTime         @default(now())
+  tier       String?          @default("free") // só para fase 6, não usado agora
+
+  configs        GuildConfig?
+  modConfig      ModConfig?
+  modLogs        ModLog[]
+  ticketConfig   TicketConfig?
+  tickets        Ticket[]
+  whitelistConfig WhitelistConfig?
+  whitelistEntries WhitelistEntry[]
+}
+
+// ============================================================
+// CONFIGURAÇÃO DE GUILD — única fonte de verdade para bot
+// Não hardcodar IDs de canal/role — tudo vem daqui
+// ============================================================
+
+model GuildConfig {
+  guild_id         String   @id @default(uuid())
+  guild            Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  accent_color_default String @default("#5865F2")
+  language          String @default("pt-BR")
+  timezone          String @default("America/Sao_Paulo")
+
+  // Config visual do bot (fallback se guild não customizou)
+  updated_at DateTime @updatedAt
+}
+
+// ============================================================
+// MODERAÇÃO — config + logs
+// log_channel_id vem do banco, nunca hardcoded
+// ============================================================
+
+model ModConfig {
+  guild_id      String   @id @default(uuid())
+  guild         Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  log_channel_id String?  // Canal de logs (Discord channel ID)
+  mute_role_id    String?  // Cargo de mute
+  rules_json      Json?    // AutoMod rules em JSONB (flexível)
+
+  updated_at DateTime @updatedAt
+}
+
+model ModLog {
+  id           String   @id @default(uuid())
+  guild_id     String   // FK — filtro obrigatório
+  guild        Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  type         String   // warn / mute / kick / ban / unban
+  user_id      String   // Discord user ID
+  moderator_id String   // Discord moderator ID
+  reason       String?
+  timestamp    DateTime @default(now())
+}
+
+// ============================================================
+// TICKETS — config + registros
+// category_id vem do banco; channel_id é criado dinamicamente
+// ============================================================
+
+model TicketConfig {
+  guild_id           String  @id @default(uuid())
+  guild              Guild   @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  category_id        String? // Categoria Discord para canais de ticket
+  support_role_id    String? // Cargo de atendimento
+  transcript_channel_id String? // Canal de transcript
+
+  updated_at DateTime @updatedAt
+}
+
+model Ticket {
+  id          String   @id @default(uuid())
+  guild_id    String
+  guild       Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  channel_id  String   // Canal Discord criado para ticket
+  opened_by   String   // Discord user ID
+  status      String   @default("open") // open / in_progress / closed / archived
+  created_at  DateTime @default(now())
+  closed_at   DateTime?
+}
+
+// ============================================================
+// WHITELIST — config + entradas
+// redm_api_key é SENSÍVEL — armazenado criptografado no banco
+// ============================================================
+
+model WhitelistConfig {
+  guild_id              String  @id @default(uuid())
+  guild                 Guild   @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  whitelist_role_id     String? // Cargo dado após aprovação
+  redm_integration_enabled Boolean @default(false)
+  redm_api_endpoint     String? // URL do servidor RedM (ex: http://localhost:3000/whitelist/check)
+  redm_api_key_encrypted String? // Criptografado — nunca texto plano
+
+  updated_at DateTime @updatedAt
+}
+
+model WhitelistEntry {
+  id          String   @id @default(uuid())
+  guild_id    String
+  guild       Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
+
+  discord_id  String   // Discord user ID
+  approved_by String?  // Moderador que aprovou
+  status      String   @default("pending") // pending / approved / rejected
+  timestamp   DateTime @default(now())
+}
+
+// ============================================================
+// ÍNDICES — garantir performance de filtro por guild_id
+// ============================================================
+
+// (Prisma criou índices únicos e FK automaticamente;
+// adicionar índices explícitos se necessário no futuro)
