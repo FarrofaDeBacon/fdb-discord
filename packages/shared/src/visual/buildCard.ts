@@ -30,10 +30,12 @@ export interface CardOptions {
 }
 
 export function buildCard(options: CardOptions) {
-  const accent = options.accentColor || 0x5865F2;
+  const accentNum = typeof options.accentColor === 'string'
+    ? parseInt(options.accentColor.replace('#', ''), 16)
+    : options.accentColor || 0x5865F2;
 
   const container = new ContainerBuilder();
-  container.setAccentColor(accent); // APARCIDO — barra colorida agora funciona
+  container.setAccentColor(accentNum); // APARCIDO — barra colorida agora funciona
 
   // Header text
   container.addTextDisplayComponents(
@@ -89,5 +91,5 @@ export function buildCard(options: CardOptions) {
   }
 
   // Limite: 40 componentes, 4000 chars — não verificado aqui (dever do caller)
-  return { container, flags: MessageFlags.IsComponentsV2, accentColor: accent };
+  return { container, flags: MessageFlags.IsComponentsV2 };
 }
