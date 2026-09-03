@@ -56,6 +56,7 @@ export function buildCard(options: CardOptions) {
   // Sections (grid-like)
   for (const sec of options.sections || []) {
     const s = new SectionBuilder();
+    s.setThumbnailAccessory(new ThumbnailBuilder().setURL('https://discord.com/assets/ff9fc8fdbcb55aefb6f5e36a6e7cf5e4c4d23f9c.png')); // accessory obrigatório per Discord API
     if (sec.title) s.addTextDisplayComponents(new TextDisplayBuilder().setContent(sec.title));
     for (const f of sec.fields || []) s.addTextDisplayComponents(new TextDisplayBuilder().setContent(f));
     container.addSectionComponents(s);
@@ -63,11 +64,9 @@ export function buildCard(options: CardOptions) {
 
   // Thumbnail
   if (options.thumbnailUrl) {
-    container.addMediaGalleryComponents(
-      // Simplificado: usando componente visual; se precisar de thumbnail exato,
-      // usar addFileComponents ou adaptar conforme Discord.js v14.19 docs
-      { media: { url: options.thumbnailUrl } } as any
-    );
+    container.addMediaGalleryComponents({
+      items: [{ media: { url: options.thumbnailUrl } }],
+    });
   }
 
   // Separator
