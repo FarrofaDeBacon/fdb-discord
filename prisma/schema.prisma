@@ -7,8 +7,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ============================================================
-// ISOLAMENTO POR GUILD É LEI — guild_id é FK obrigatória
+// ATENÇÃO: guild_id nas config/tables auxiliares (GuildConfig etc) guarda
+// o UUID interno de Guild.id (PK compartilhada 1:1), NÃO o snowflake Discord.
+// O snowflake real fica em Guild.guild_id. Repository deve resolver
+// Discord guild ID → Guild.id antes de filtrar.
 // Nenhuma tabela de configuração/moderação sem guild_id
 // ============================================================
 
