@@ -32,11 +32,34 @@ api.get("/auth/discord", async (req, reply) => {
 api.get("/auth/discord/callback", async (req, reply) => {
   const code = (req.query as any)?.code;
   if (!code) return reply.status(400).send({ error: "Sem code" });
-  // Troca code por token (simulado — implementação real usa discord.com/api/oauth2/token)
-  const token = `token-${code}`;
-  // Busca guilds do usuário via Discord API; filtra por bit Administrator
-  const guilds = [{ id: "1111", permissions: "8" }, { id: "2222", permissions: "0" }];
-  const adminIds = guilds.filter((g) => (parseInt(g.permissions) & 8) === 8).map((g) => g.id);
+
+  // 1. Troca REAL por token (Discord API, não simulado)
+  const tokenRes = await fetch("https://discord.com/api/oauth2/token", {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams({
+      client_id: process.env.DISCORD_CLIENT_ID!,
+      client_secret: process.env.DISCORD_CLIENT_SECRET!,
+      grant_type: "authorization_code",
+      code,
+      redirect_uri: process.env.DISCORD_REDIRECT_URI!,
+    }),
+  });
+  if (!tokenRes.ok) return reply.status(400).send({ error: "Code inválido ou expirado" });
+  const { access_token } = await tokenRes.json();
+
+  // 2. Busca guilds REAIS do usuário logado
+  const guildsRes = await fetch("https://discord.com/api/users/@me/guilds", {
+    headers: { Authorization: `Bearer ${access_token}` },
+  });
+  if (!guildsRes.ok) return reply.status(500).send({ error: "Falha ao buscar guilds" });
+  const guilds = await guildsRes.json();
+
+  // 3. Filtra admin (bit 0x8 = Administrator)
+  const adminIds = (guilds || [])
+    .filter((g: any) => (parseInt(g.permissions || "0") & 0x8) === 0x8)
+    .map((g: any) => g.id);
+
   (req.session as any).guildIds = adminIds;
   return reply.redirect(process.env.DASHBOARD_URL || "/");
 });
