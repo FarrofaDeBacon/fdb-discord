@@ -86,7 +86,7 @@ export const configCommand = {
       return interaction.reply({ content: `Ticket categoria = <#${canal.id}>`, ephemeral: true });
     }
     if (subGroup === 'ticket' && sub === 'suporte') {
-      const cargo = interaction.options.getRole('cargo').id;
+      const cargo = interaction.options.getRole('cargo', true).id;
       await prisma.ticketConfig.upsert({
         where: { guild_id: guildUuid },
         update: { support_role_id: cargo },
@@ -94,8 +94,8 @@ export const configCommand = {
       });
       return interaction.reply({ content: `Ticket suporte = <@&${cargo}>`, ephemeral: true });
     }
-    if (subGroup === 'whitelist' && sub === 'cargo') {
-      const cargo = interaction.options.getRole('cargo').id;
+    if (sub === 'whitelist') {
+      const cargo = interaction.options.getRole('cargo', true).id;
       await prisma.whitelistConfig.upsert({
         where: { guild_id: guildUuid },
         update: { whitelist_role_id: cargo },
