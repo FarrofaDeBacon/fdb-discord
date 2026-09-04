@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, PermissionFlagsBits, ChannelType } from 'discord.js';
 import { buildCard } from '@fdb-discord/shared';
 import { resolveGuildUuid } from '@fdb-discord/shared';
+import { resolveThemeColor } from '@fdb-discord/shared';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
@@ -22,21 +23,24 @@ export const configCommand = {
         { name: 'closed', value: 'closed' },
       ))
       .addStringOption(o => o.setName('cor_hex').setRequired(true)))
-    .addSubcommand(sub => sub
+    .addSubcommandGroup(group => group
       .setName('ticket')
       .setDescription('Configurar ticket')
-      .addSubcommand(sub2 => sub2.setName('categoria').setDescription('Canal categoria').addStringOption(o => o.setName('canal').setRequired(true)))
-      .addSubcommand(sub2 => sub2.setName('suporte').setDescription('Cargo suporte').addRoleOption(o => o.setName('cargo').setRequired(true))))
+      .addSubcommand(sub => sub.setName('categoria').setDescription('Canal categoria')
+        .addChannelOption(o => o.setName('canal').setRequired(true).addChannelTypes(ChannelType.GuildCategory)))
+      .addSubcommand(sub => sub.setName('suporte').setDescription('Cargo suporte')
+        .addRoleOption(o => o.setName('cargo').setRequired(true))))
     .addSubcommand(sub => sub
       .setName('whitelist')
       .setDescription('Configurar whitelist')
-      .addStringOption(o => o.setName('cargo').setRequired(true)))
+      .addRoleOption(o => o.setName('cargo').setRequired(true)))
     .addSubcommand(sub => sub
       .setName('ver')
       .setDescription('Ver configuração atual')),
 
   async execute(interaction: ChatInputCommandInteraction) {
     const guildUuid = await resolveGuildUuid(prisma, interaction.guildId!, interaction.guild?.name);
+    const subGroup = interaction.options.getSubcommandGroup(false);
     const sub = interaction.options.getSubcommand(true);
 
     if (sub === 'tema') {
@@ -59,7 +63,7 @@ export const configCommand = {
       const wc = await prisma.whitelistConfig.findUnique({ where: { guild_id: guildUuid } });
       const { container, flags } = buildCard({
         title: '⚙️ Config',
-        accentColor: 0x5865F2,
+        accentColor: resolveThemeColor('neutral', gc?.theme_json as any),
         textFields: [
           `Tema: ${gc?.theme_json ? JSON.stringify(gc.theme_json) : 'default'}`,
           `Ticket categoria: ${tc?.category_id || 'nenhuma'}`,
