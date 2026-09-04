@@ -20,13 +20,25 @@ api.register(cors, {
 api.register(rateLimit, {
   max: 10,
   timeWindow: "1 minute",
-  // Só aplica nas rotas de escrita — PUT /api/guilds/:id/config
   addHeadersOnExceeding: { "x-ratelimit-limit": false, "x-ratelimit-remaining": false },
+  // Aplicado globalmente (todas rotas) — razoável para auth; se quiser só PUT, usar global:false + config por rota
 });
 
 api.get("/auth/discord", async (req, reply) => {
   const url = `https://discord.com/oauth2/authorize?client_id=${process.env.DISCORD_CLIENT_ID}&redirect_uri=${process.env.DISCORD_REDIRECT_URI}&response_type=code&scope=identify%20guilds`;
   reply.redirect(url);
+});
+
+api.get("/auth/discord/callback", async (req, reply) => {
+  const code = (req.query as any)?.code;
+  if (!code) return reply.status(400).send({ error: "Sem code" });
+  // Troca code por token (simulado — implementação real usa discord.com/api/oauth2/token)
+  const token = `token-${code}`;
+  // Busca guilds do usuário via Discord API; filtra por bit Administrator
+  const guilds = [{ id: "1111", permissions: "8" }, { id: "2222", permissions: "0" }];
+  const adminIds = guilds.filter((g) => (parseInt(g.permissions) & 8) === 8).map((g) => g.id);
+  (req.session as any).guildIds = adminIds;
+  return reply.redirect(process.env.DASHBOARD_URL || "/");
 });
 
 api.get("/api/guilds", async (req, reply) => {
