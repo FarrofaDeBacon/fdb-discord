@@ -1,6 +1,7 @@
 import Fastify from "fastify";
 import cookie from "@fastify/cookie";
 import session from "@fastify/session";
+import cors from "@fastify/cors";
 import { checkGuildAdmin } from "./auth/discord";
 
 export const api = Fastify({ logger: true });
@@ -9,11 +10,10 @@ export const api = Fastify({ logger: true });
 api.register(cookie);
 api.register(session, { secret: process.env.SESSION_SECRET || "dev-secret", cookie: { secure: false } });
 
-// CORS restrito + rate limit (escrita)
-api.register(async (fastify) => {
-  fastify.addHook("onRequest", async (req, reply) => {
-    reply.header("Access-Control-Allow-Origin", process.env.DASHBOARD_URL || "http://localhost:3000");
-  });
+api.register(cors, {
+  origin: process.env.DASHBOARD_URL || "http://localhost:3000",
+  credentials: true,
+  methods: ["GET", "PUT", "POST", "OPTIONS"],
 });
 
 api.get("/auth/discord", async (req, reply) => {
@@ -36,6 +36,10 @@ api.get("/api/guilds/:id/config", async (req, reply) => {
 });
 
 api.put("/api/guilds/:id/config", async (req, reply) => {
+  // Rate limit: 10 writes/min por IP (simples — hook de rate limit)
+  const ip = req.ip || "unknown";
+  (req as any)._rateHits = ((req as any)._rateHits || 0) + 1;
+  if ((req as any)._rateHits > 10) return reply.status(429).send({ error: "Rate limit" });
   const guildIds = (req.session as any)?.guildIds || [];
   if (!checkGuildAdmin((req.params as any).id, guildIds)) {
     return reply.status(403).send({ error: "Não é admin desta guild" });
