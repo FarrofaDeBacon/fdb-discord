@@ -41,6 +41,7 @@ model GuildConfig {
   guild            Guild    @relation(fields: [guild_id], references: [id], onDelete: Cascade)
 
   accent_color_default String @default("#5865F2")
+  theme_json            Json?
   language          String @default("pt-BR")
   timezone          String @default("America/Sao_Paulo")
 
