@@ -75,7 +75,35 @@ export const configCommand = {
       return interaction.reply({ flags, components: [container] });
     }
 
-    // Subcomandos restantes (ticket/whitelist) — implementação parcial para 5.2 aprovar permissão
-    return interaction.reply({ content: 'Subcomando em implementação (5.3).', ephemeral: true });
+    // 5.3 — subcomandos de grupo: ticket (categoria/suporte) + whitelist (cargo)
+    if (subGroup === 'ticket' && sub === 'categoria') {
+      const canal = interaction.options.getChannel('canal', true);
+      await prisma.ticketConfig.upsert({
+        where: { guild_id: guildUuid },
+        update: { category_id: canal.id },
+        create: { guild_id: guildUuid, category_id: canal.id },
+      });
+      return interaction.reply({ content: `Ticket categoria = <#${canal.id}>`, ephemeral: true });
+    }
+    if (subGroup === 'ticket' && sub === 'suporte') {
+      const cargo = interaction.options.getRole('cargo').id;
+      await prisma.ticketConfig.upsert({
+        where: { guild_id: guildUuid },
+        update: { support_role_id: cargo },
+        create: { guild_id: guildUuid, support_role_id: cargo },
+      });
+      return interaction.reply({ content: `Ticket suporte = <@&${cargo}>`, ephemeral: true });
+    }
+    if (subGroup === 'whitelist' && sub === 'cargo') {
+      const cargo = interaction.options.getRole('cargo').id;
+      await prisma.whitelistConfig.upsert({
+        where: { guild_id: guildUuid },
+        update: { whitelist_role_id: cargo },
+        create: { guild_id: guildUuid, whitelist_role_id: cargo },
+      });
+      return interaction.reply({ content: `Whitelist cargo = <@&${cargo}>`, ephemeral: true });
+    }
+
+    return interaction.reply({ content: 'Subcomando não reconhecido.', ephemeral: true });
   },
 };
